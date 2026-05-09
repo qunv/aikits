@@ -15,7 +15,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         components: {
           Layout: {
             headerHeight: 56,
-            headerBg: 'rgb(26 44 69)',
+            headerBg: '#ebebeb',
             siderBg: '#ebebeb',
             bodyBg: '#f1f1f1',
           },

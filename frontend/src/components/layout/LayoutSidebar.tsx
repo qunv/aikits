@@ -122,7 +122,7 @@ export const LayoutSidebar = observer(
               <Button
                 type="text"
                 icon={<MenuOutlined />}
-                className="text-white!"
+                className=""
                 onClick={() => setCollapsed(!collapsed)}
               />
             )}

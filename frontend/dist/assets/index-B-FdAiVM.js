@@ -1,0 +1,1 @@
+import{j as e,T as t}from"./index-Cu-Qx4JS.js";const{Title:s}=t;function a(){return e.jsx("div",{className:"flex flex-col gap-4",children:e.jsx(s,{level:3,children:"Settings"})})}export{a as default};

@@ -16,10 +16,10 @@ export function LayoutHeader({ onMenuToggle }: LayoutHeaderProps) {
         <Button
           type="text"
           icon={<MenuOutlined />}
-          className="text-white! lg:hidden!"
+          className="lg:hidden!"
           onClick={onMenuToggle}
         />
-        <Logo invert />
+        <Logo />
         <GlobalSpinner />
       </div>
     </Header>

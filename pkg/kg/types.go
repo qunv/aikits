@@ -77,6 +77,34 @@ type ResolveOptions struct {
 // TimeFormat is the format used for LastIndexed timestamps in StatusResult.
 const TimeFormat = time.RFC3339
 
+// GraphNode is a node in the knowledge graph for UI display.
+type GraphNode struct {
+	ID         int64  `json:"id"`
+	Lang       string `json:"lang"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	FQN        string `json:"fqn"`
+	Signature  string `json:"signature"`
+	Visibility string `json:"visibility"`
+	StartLine  int    `json:"startLine"`
+}
+
+// GraphEdge is a directed edge in the knowledge graph for UI display.
+type GraphEdge struct {
+	ID         int64   `json:"id"`
+	Kind       string  `json:"kind"`
+	Src        int64   `json:"src"`
+	Dst        int64   `json:"dst"`
+	Confidence float64 `json:"confidence"`
+	Provenance string  `json:"provenance"`
+}
+
+// GraphData holds all nodes and edges of the knowledge graph.
+type GraphData struct {
+	Nodes []GraphNode `json:"nodes"`
+	Edges []GraphEdge `json:"edges"`
+}
+
 // ExportOptions controls the behavior of Export.
 type ExportOptions struct {
 	Format ExportFormat

@@ -89,6 +89,17 @@ func (a *App) KGStatus(repoRoot string) (*pkgkg.StatusResult, error) {
 	return kg.Status(a.ctx)
 }
 
+// KGGetGraph returns all nodes and edges in the knowledge graph for repoRoot.
+// lang filters by language ("go", "java"); empty string returns all.
+func (a *App) KGGetGraph(repoRoot, lang string) (*pkgkg.GraphData, error) {
+	kg, err := pkgkg.Open(repoRoot, a.log)
+	if err != nil {
+		return nil, err
+	}
+	defer kg.Close() //nolint:errcheck
+	return kg.GetGraph(a.ctx, lang)
+}
+
 // KGQuerySymbol looks up a symbol by name or fully-qualified name.
 func (a *App) KGQuerySymbol(repoRoot, nameOrFQN string) ([]pkgkg.Symbol, error) {
 	kg, err := pkgkg.Open(repoRoot, a.log)
