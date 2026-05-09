@@ -12,3 +12,5 @@
 /build/
 /dist/
 .kg
+/frontend/node_modules
+/frontend/dist

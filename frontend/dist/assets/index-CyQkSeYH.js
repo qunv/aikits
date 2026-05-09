@@ -1,1 +1,0 @@
-import{j as e,T as t}from"./index-Cu-Qx4JS.js";const{Title:s,Text:o}=t;function l(){return e.jsxs("div",{className:"flex flex-col gap-4",children:[e.jsx(s,{level:3,children:"Welcome to Aikits"}),e.jsx(o,{className:"text-secondary",children:"Select a tool from the sidebar to get started."})]})}export{l as default};
