@@ -5,6 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+
 	"aikits/internal/memory/handlers"
 	"aikits/internal/memory/types"
 	pkgkg "aikits/pkg/kg"
@@ -28,6 +30,16 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
+
+// ── Repository ───────────────────────────────────────────────────────────────
+
+// SelectRepository opens a native folder picker and returns the chosen path.
+func (a *App) SelectRepository() (string, error) {
+	return wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title: "Select Repository",
+	})
+}
+
 
 // ── Memory ───────────────────────────────────────────────────────────────────
 

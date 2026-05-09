@@ -45,3 +45,7 @@ export function ScaffoldSkillAdd(arg1) {
 export function ScaffoldSkillList() {
   return window['go']['main']['App']['ScaffoldSkillList']();
 }
+
+export function SelectRepository() {
+  return window['go']['main']['App']['SelectRepository']();
+}

@@ -1,3 +1,13 @@
-build/bin
-node_modules
-frontend/dist
+.DS_Store
+.env*
+!.env.example
+.idea
+.npmrc
+.editorconfig
+
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
+/dist/

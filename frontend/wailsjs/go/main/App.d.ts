@@ -25,3 +25,5 @@ export function ScaffoldInit(arg1:scaffold.InitOptions):Promise<scaffold.InitRes
 export function ScaffoldSkillAdd(arg1:scaffold.SkillAddOptions):Promise<Array<scaffold.SkillAddResult>>;
 
 export function ScaffoldSkillList():Promise<Array<string>>;
+
+export function SelectRepository():Promise<string>;

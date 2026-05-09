@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@layer components {
+  .text-secondary {
+    @apply text-gray-500;
+  }
+
+  .content-wrapper-2xl {
+    @apply max-w-2xl mx-auto;
+  }
+
+  .content-wrapper-md {
+    @apply max-w-md mx-auto;
+  }
+}

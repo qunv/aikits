@@ -1,0 +1,35 @@
+.ant-spin-text {
+  color: grey;
+}
+
+.ant-table-wrapper {
+  .ant-table-container table > thead > tr:first-child {
+    & > *:first-child,
+    & > *:last-child {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+  }
+
+  &:not(.ant-card .ant-table-wrapper) {
+    box-shadow: var(--ant-box-shadow-tertiary);
+    border-radius: 12px;
+    overflow: hidden;
+
+    .ant-pagination {
+      padding-inline: 16px;
+    }
+  }
+}
+
+.ant-card-body.p-0\! .ant-table-wrapper .ant-pagination {
+  padding-inline: 16px !important;
+}
+
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content {
+  border-radius: 8px;
+}
+
+.ant-card-meta-title {
+  margin-bottom: 0 !important;
+}

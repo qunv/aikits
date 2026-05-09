@@ -7,10 +7,13 @@ LDFLAGS  := -ldflags "-X '$(MODULE)/internal/command.Version=$(VERSION)'"
 GOBIN    := $(or $(shell go env GOBIN),$(shell go env GOPATH)/bin)
 DESTDIR  ?= $(GOBIN)
 
-.PHONY: build run test lint clean tidy install uninstall
+.PHONY: build run test lint clean tidy install uninstall dev
 
 build:
 	go build $(LDFLAGS) -o bin/$(BINARY) ./cmd/$(BINARY)
+
+dev:
+	WEBKIT_DISABLE_DMABUF_RENDERER=1 wails dev -tags webkit2_41
 
 install: build
 	@mkdir -p $(DESTDIR)
