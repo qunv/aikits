@@ -10,6 +10,7 @@ const (
 	LangGo         Lang = "go"
 	LangJava       Lang = "java"
 	LangJavaScript Lang = "javascript"
+	LangHTML       Lang = "html"
 )
 
 // ExportFormat is the output format for graph export.

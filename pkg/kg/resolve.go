@@ -28,10 +28,11 @@ func (kg *KG) Resolve(_ context.Context, opts ResolveOptions) error {
 		"go":         &kglang.GoResolver{},
 		"java":       &kglang.JavaResolver{MavenDownloadDeps: opts.MavenDownloadDeps},
 		"javascript": &kglang.JavaScriptResolver{},
+		"html":       &kglang.HTMLResolver{},
 	}
 	r, ok := resolvers[lang]
 	if !ok {
-		return fmt.Errorf("unsupported language %q; use %q, %q, or %q", lang, LangGo, LangJava, LangJavaScript)
+		return fmt.Errorf("unsupported language %q; use %q, %q, %q, or %q", lang, LangGo, LangJava, LangJavaScript, LangHTML)
 	}
 
 	err := r.Resolve(kg.db, kg.repo, kg.root, budget, kg.log)
