@@ -70,8 +70,9 @@ func (kg *KG) Index(_ context.Context, opts IndexOptions) (*IndexResult, error) 
 	}
 
 	langIndexers := map[string]kglang.Indexer{
-		"go":   kglang.NewGoIndexer(kg.root),
-		"java": &kglang.JavaIndexer{},
+		"go":         kglang.NewGoIndexer(kg.root),
+		"java":       &kglang.JavaIndexer{},
+		"javascript": &kglang.JavaScriptIndexer{},
 	}
 
 	sem := make(chan struct{}, jobs)

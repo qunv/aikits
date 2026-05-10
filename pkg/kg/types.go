@@ -6,9 +6,10 @@ import "time"
 type Lang string
 
 const (
-	LangAll  Lang = ""
-	LangGo   Lang = "go"
-	LangJava Lang = "java"
+	LangAll        Lang = ""
+	LangGo         Lang = "go"
+	LangJava       Lang = "java"
+	LangJavaScript Lang = "javascript"
 )
 
 // ExportFormat is the output format for graph export.
