@@ -185,8 +185,6 @@ func (w *htmlWalker) visitStartTag(node *ts.Node) {
 			Provenance: "heuristic",
 		})
 	}
-
-	// Recurse into sibling children of the element (not the tag itself).
 }
 
 // attrValue returns the value of the named attribute within a start_tag node,

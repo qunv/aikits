@@ -73,8 +73,8 @@ type HTMLExtractResult struct {
 ### `internal/kg/indexer/discovery.go` changes
 - Add `.html` and `.htm` to `langForFile`.
 
-### `internal/kg/indexer/indexer.go` changes
-- Route `"html"` files to `html.ExtractHTML` (mirrors JS routing).
+### `pkg/kg/index.go` changes
+- Route `"html"` files to `html.ExtractHTML` via the `langIndexers` map.
 
 ### `internal/kg/lang/resolve_html.go`
 - No-op resolver that logs and returns nil.
