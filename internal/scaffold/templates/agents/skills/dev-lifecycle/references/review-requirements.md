@@ -2,7 +2,8 @@
 
 Review `docs/ai/{name}/requirements.md` against the [../phases/requirements/README.md](../phases/requirements/README.md) template.
 
-1. **Search memory** for relevant conventions or past patterns.
+1. **Search memory** for relevant conventions or past patterns:
+   `aikits memory search --query "<name> requirements constraints"` and `aikits memory search --query "<name> conventions"`.
 2. **Review** each section: problem statement, goals/non-goals, success criteria, user stories, constraints, open
    questions, template compliance.
 3. **Clarify and explore (loop until converged)**:
@@ -17,7 +18,8 @@ Review `docs/ai/{name}/requirements.md` against the [../phases/requirements/READ
       criteria, conflicting goals, unresolvable scope ambiguity, no identifiable target users — stop the review and
       return to **Phase 1** to rebuild requirements from scratch rather than patching a broken foundation.
 4. **Update** the requirements doc with clarified answers and chosen options.
-5. **Store** clarifications in memory.
+5. **Store** clarifications in memory after the quality gate passes:
+   `aikits memory store --title "<decision title>" --content "<context and rationale>" --tags "<feature,requirements>" --scope "repo:<org/repo>"`
 6. **Summarize** what was validated, what was updated, remaining open items.
 
 **Next**: Phase 3 (Review Design). If fundamental gaps remain unresolvable → back to Phase 1.

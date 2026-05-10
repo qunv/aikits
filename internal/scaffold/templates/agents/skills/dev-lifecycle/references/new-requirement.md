@@ -1,8 +1,7 @@
 # Phase 1: New Requirement
 
-1. **Search AI DevKit memory** (not built-in memory) for relevant past features or conventions via
+1. **Search memory** for relevant past features or conventions:
    `aikits memory search --query "feature <name> past decisions"` and `aikits memory search --query "<name> conventions"`.
-   If unfamiliar, check the AI DevKit memory skill first.
 2. **Ask** for: feature name (kebab-case), problem, target users, key user stories. Skip what memory already covers;
    store answers after. **Brainstorm**: ask clarifying questions as needed, explore alternatives to confirm this is the
    right thing to build, then present 2–3 approaches for the chosen direction — one-line trade-offs + recommendation.

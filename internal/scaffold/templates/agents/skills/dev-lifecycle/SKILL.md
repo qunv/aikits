@@ -68,13 +68,31 @@ Phases: `requirements`, `design`, `planning`, `implementation`, `testing`.
 
 ## Memory Integration
 
-In phases with clarification questions (typically 1–3), run these CLI commands (see the `memory` skill for full options):
+Run these CLI commands at phase boundaries (see the `memory` skill for full options and quality gate):
 
-1. **Before asking** — search first, only ask about uncovered gaps. Use specific queries:
-   - Phase 1: `aikits memory search --query "feature <name> past decisions"` and `aikits memory search --query "<name> conventions"`
-   - Phase 2: `aikits memory search --query "<name> requirements constraints"`
-   - Phase 3: `aikits memory search --query "<name> architecture patterns"`
-2. **After clarification** — store for future sessions: `aikits memory store --title "<title>" --content "<insight>" --tags "<tags>" --scope "repo:<name>"`
+**Search first** — before asking questions or starting work. Use results as context; only ask about uncovered gaps.
+
+| Phase | Search queries |
+|-------|----------------|
+| 1 | `aikits memory search --query "feature <name> past decisions"` · `aikits memory search --query "<name> conventions"` |
+| 2 | `aikits memory search --query "<name> requirements constraints"` · `aikits memory search --query "<name> conventions"` |
+| 3 | `aikits memory search --query "<name> architecture patterns"` · `aikits memory search --query "<name> design decisions"` |
+| 4 | `aikits memory search --query "<name> implementation patterns"` · `aikits memory search --query "<name> gotchas"` |
+| 6 | `aikits memory search --query "<name> implementation patterns"` · `aikits memory search --query "<name> design constraints"` |
+| 7 | `aikits memory search --query "<name> testing patterns"` · `aikits memory search --query "<name> test gotchas"` |
+| 8 | `aikits memory search --query "<name> code review findings"` · `aikits memory search --query "<name> security pitfalls"` |
+
+**Store after** — once the quality gate passes. Use the narrowest useful scope (`repo:<org/repo>` preferred).
+
+```bash
+aikits memory store \
+  --title "<actionable title, 10-100 chars>" \
+  --content "<context, guidance, evidence, exceptions>" \
+  --tags "<feature,phase>" \
+  --scope "repo:<org/repo>"
+```
+
+Store per phase: decisions and conventions (1–3) · implementation patterns and gotchas (4) · deviations found (6) · testing patterns (7) · blocking review findings (8).
 
 ## Red Flags and Rationalizations
 
