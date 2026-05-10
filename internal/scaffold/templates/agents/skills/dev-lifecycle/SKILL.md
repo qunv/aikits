@@ -74,7 +74,7 @@ In phases with clarification questions (typically 1–3), run these CLI commands
    - Phase 1: `aikits memory search --query "feature <name> past decisions"` and `aikits memory search --query "<name> conventions"`
    - Phase 2: `aikits memory search --query "<name> requirements constraints"`
    - Phase 3: `aikits memory search --query "<name> architecture patterns"`
-2. **After clarification** — store for future sessions: `aikits memory store --title "<title>" --content "<insight>" --tags "<tags>"`
+2. **After clarification** — store for future sessions: `aikits memory store --title "<title>" --content "<insight>" --tags "<tags>" --scope "repo:<name>"`
 
 ## Red Flags and Rationalizations
 

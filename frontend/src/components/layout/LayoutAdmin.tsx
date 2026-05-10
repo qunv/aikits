@@ -1,5 +1,5 @@
 import type { MenuItemType } from 'antd/es/menu/interface';
-import { HomeOutlined, ApartmentOutlined } from '@ant-design/icons';
+import { HomeOutlined, ApartmentOutlined, BookOutlined } from '@ant-design/icons';
 import { LayoutSidebar } from '@components/layout/LayoutSidebar';
 import { ROUTES } from '@constants/routes';
 import { NavLink } from 'react-router';
@@ -21,6 +21,15 @@ const menuItems: MenuItemType[] = [
     label: (
       <NavLink to={ROUTES.knowledgeGraph} className="font-semibold">
         Knowledge Graph
+      </NavLink>
+    ),
+  },
+  {
+    key: ROUTES.features,
+    icon: <BookOutlined />,
+    label: (
+      <NavLink to={ROUTES.features} className="font-semibold">
+        Features
       </NavLink>
     ),
   },

@@ -6,6 +6,12 @@ import {types} from '../models';
 
 export function AgentList():Promise<Array<scaffold.AgentInfo>>;
 
+export function DocsFeaturePhases(arg1:string):Promise<Array<string>>;
+
+export function DocsListFeatures():Promise<Array<string>>;
+
+export function DocsReadPhase(arg1:string,arg2:string):Promise<string>;
+
 export function KGGetGraph(arg1:string,arg2:string):Promise<kg.GraphData>;
 
 export function KGIndex(arg1:string,arg2:kg.IndexOptions):Promise<kg.IndexResult>;

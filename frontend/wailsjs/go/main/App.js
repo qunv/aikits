@@ -6,6 +6,18 @@ export function AgentList() {
   return window['go']['main']['App']['AgentList']();
 }
 
+export function DocsFeaturePhases(arg1) {
+  return window['go']['main']['App']['DocsFeaturePhases'](arg1);
+}
+
+export function DocsListFeatures() {
+  return window['go']['main']['App']['DocsListFeatures']();
+}
+
+export function DocsReadPhase(arg1, arg2) {
+  return window['go']['main']['App']['DocsReadPhase'](arg1, arg2);
+}
+
 export function KGGetGraph(arg1, arg2) {
   return window['go']['main']['App']['KGGetGraph'](arg1, arg2);
 }

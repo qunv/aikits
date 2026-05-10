@@ -16,3 +16,4 @@
 /frontend/dist
 .github
 .worktrees
+bin
