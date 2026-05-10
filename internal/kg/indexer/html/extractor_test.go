@@ -161,6 +161,25 @@ func TestInlineScriptCallsiteDelegation(t *testing.T) {
 	}
 }
 
+// ─── Unquoted attribute values ────────────────────────────────────────────────
+
+func TestUnquotedAttributeValue(t *testing.T) {
+	// tree-sitter parses unquoted attribute values as attribute_value (not quoted_attribute_value)
+	r := extract(t, `<html><body><div id=hero>text</div></body></html>`)
+	if !findSym(r, "hero", "id") {
+		t.Errorf("expected id symbol 'hero' from unquoted attribute, got %+v", r.Symbols)
+	}
+}
+
+// ─── Inline script with import statement ──────────────────────────────────────
+
+func TestInlineScriptImportDelegation(t *testing.T) {
+	r := extract(t, `<html><body><script>import foo from './foo.js';</script></body></html>`)
+	if !findImport(r, "./foo.js") {
+		t.Errorf("expected import './foo.js' from inline script, got %+v", r.ImportPaths)
+	}
+}
+
 // ─── SrcPkgFQN ────────────────────────────────────────────────────────────────
 
 func TestSrcPkgFQN(t *testing.T) {
