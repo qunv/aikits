@@ -1,9 +1,9 @@
 # Phase 3: Review Design
 
-Review `docs/ai/design/feature-{name}.md` for completeness and fit against requirements.
+Review `docs/ai/{name}/design.md` for completeness and fit against requirements.
 
 1. **Search memory** for relevant architecture patterns or past decisions.
-2. **Cross-check against requirements** — read `docs/ai/requirements/feature-{name}.md` and verify every goal, user
+2. **Cross-check against requirements** — read `docs/ai/{name}/requirements.md` and verify every goal, user
    story, and constraint has corresponding design coverage. Flag uncovered requirements.
 3. **Review completeness** — architecture (mermaid diagram), components, technology choices, data models, API contracts,
    design trade-offs, non-functional requirements.

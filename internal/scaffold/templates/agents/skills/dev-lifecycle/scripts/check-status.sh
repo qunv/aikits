@@ -17,11 +17,11 @@ exists()      { [[ -f "$1" ]]; }
 # that is NOT part of a bare template (templates typically have no filled content).
 has_content() { [[ -f "$1" ]] && grep -qE '^## ' "$1" 2>/dev/null; }
 
-REQ="$DOCS/requirements/feature-${FEATURE}.md"
-DES="$DOCS/design/feature-${FEATURE}.md"
-PLN="$DOCS/planning/feature-${FEATURE}.md"
-IMP="$DOCS/implementation/feature-${FEATURE}.md"
-TST="$DOCS/testing/feature-${FEATURE}.md"
+REQ="$DOCS/${FEATURE}/requirements.md"
+DES="$DOCS/${FEATURE}/design.md"
+PLN="$DOCS/${FEATURE}/planning.md"
+IMP="$DOCS/${FEATURE}/implementation.md"
+TST="$DOCS/${FEATURE}/testing.md"
 
 echo "=== Status: $FEATURE ==="
 

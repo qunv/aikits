@@ -10,9 +10,9 @@
     - Default: create and use `feature-<name>` worktree
     - Optional fallback: no-worktree only when user explicitly requests it
     - Required guards: context verification + dependency bootstrap
-4. **Create docs** by copying `README.md` from each `docs/ai/` subdirectory → `docs/ai/{phase}/feature-{name}.md` (
-   requirements, design, planning, implementation, testing). Preserve frontmatter. Leave design, planning, implementation,
-   and testing docs as empty templates — they will be filled in later phases.
+4. **Create docs** — for each phase (`requirements`, `design`, `planning`, `implementation`, `testing`), read
+   `<skill-dir>/phases/{phase}/README.md` and copy it to `docs/ai/{name}/{phase}.md`. Preserve frontmatter. Leave
+   design, planning, implementation, and testing docs as empty templates — they will be filled in later phases.
 5. **Fill requirements doc** — problem statement, goals/non-goals, user stories, success criteria, constraints, open
    questions.
 

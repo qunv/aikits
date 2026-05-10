@@ -62,9 +62,9 @@ Not every phase moves forward. When a phase reveals problems, loop back:
 
 ## Doc Convention
 
-Feature docs: `docs/ai/{phase}/feature-{name}.md` (copy from `README.md` template in each directory, preserve front matter). Keep `<name>` aligned with the worktree/branch name `feature-<name>`.
+Feature docs: `docs/ai/{name}/{phase}.md` (read from `<skill-dir>/phases/{phase}/README.md`, preserve front matter). Keep `<name>` aligned with the worktree/branch name `feature-<name>`.
 
-Phases: `requirements/`, `design/`, `planning/`, `implementation/`, `testing/`.
+Phases: `requirements`, `design`, `planning`, `implementation`, `testing`.
 
 ## Memory Integration
 

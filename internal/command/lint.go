@@ -8,24 +8,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var requiredDocsAIDirs = []string{
-	"requirements",
-	"design",
-	"planning",
-	"implementation",
-	"testing",
-}
-
 func newLintCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "lint [target]",
-		Short: "Verify the docs/ai/ structure exists and is valid",
-		Long: `Checks that the base docs/ai/ scaffold is present and well-formed.
+		Short: "Verify the docs/ai/ directory exists",
+		Long: `Checks that the base docs/ai/ scaffold is present.
 
 Validates:
   - docs/ai/ directory exists
-  - Each required sub-directory exists: requirements, design, planning, implementation, testing
-  - Each sub-directory contains a non-empty README.md
 
 Exit code 0 when all checks pass, 1 otherwise.`,
 		Args: cobra.MaximumNArgs(1),
@@ -77,34 +67,6 @@ func lintDocsAI(target string) (*lintResult, error) {
 		return result, nil
 	}
 	result.addPass("docs/ai/ directory", "exists")
-
-	// Check each required sub-directory and its README.md
-	for _, dir := range requiredDocsAIDirs {
-		subDir := filepath.Join(docsAIDir, dir)
-		prefix := fmt.Sprintf("docs/ai/%s/", dir)
-
-		if !dirExists(subDir) {
-			result.addFail(prefix+"directory", "directory does not exist")
-			continue
-		}
-		result.addPass(prefix+"directory", "exists")
-
-		readmePath := filepath.Join(subDir, "README.md")
-		info, err := os.Stat(readmePath)
-		if err != nil {
-			result.addFail(prefix+"README.md", "file does not exist")
-			continue
-		}
-		if info.IsDir() {
-			result.addFail(prefix+"README.md", "expected a file, found a directory")
-			continue
-		}
-		if info.Size() == 0 {
-			result.addFail(prefix+"README.md", "file is empty")
-			continue
-		}
-		result.addPass(prefix+"README.md", fmt.Sprintf("exists (%d bytes)", info.Size()))
-	}
 
 	return result, nil
 }

@@ -25,7 +25,7 @@ func newInitCmd() *cobra.Command {
 This command writes:
   - <agent-dir>/prompts/*
   - <agent-dir>/instructions/*  (agent-specific, e.g. copilot → .github/)
-  - docs/ai/{requirements,design,planning,implementation,testing}/README.md
+  - docs/ai/README.md
 
 Existing files are preserved and reported as skipped.`,
 		Args: cobra.MaximumNArgs(1),

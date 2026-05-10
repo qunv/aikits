@@ -1,11 +1,11 @@
 # Phase 5: Update Planning
 
-Reconcile `docs/ai/planning/feature-{name}.md` with actual progress. Run once per session after completing one or more
+Reconcile `docs/ai/{name}/planning.md` with actual progress. Run once per session after completing one or more
 tasks — not after every individual task. Batch all task completions from the session before reconciling.
 
 # Phase 5: Update Planning
 
-Reconcile `docs/ai/planning/feature-{name}.md` with actual progress. Run once per session after completing one or more
+Reconcile `docs/ai/{name}/planning.md` with actual progress. Run once per session after completing one or more
 tasks — not after every individual task. Batch all task completions from the session before reconciling.
 
 > **Note:** Phase 4 now persists task status directly to the planning doc as each task completes. In a normal hot flow,
