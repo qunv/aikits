@@ -55,12 +55,13 @@ func newKgIndexCmd(_ *config.Config, log *zap.Logger) *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&full, "full", false, "ignore cache and reindex all files")
-	cmd.Flags().StringVar(&langFlag, "lang", "", "language filter: go,java (default: all)")
+	cmd.Flags().StringVar(&langFlag, "lang", "", "language filter: go,java,javascript (default: all)")
 	cmd.Flags().IntVar(&jobs, "jobs", 0, "number of parallel workers (default: NumCPU)")
 	return cmd
 }
 
-// parseLangFlag converts a comma-separated lang string (e.g. "go,java") to []pkgkg.Lang.
+// parseLangFlag converts a comma-separated lang string (e.g. "go,java,javascript") to []pkgkg.Lang.
+// "js" is accepted as an alias for "javascript".
 func parseLangFlag(flag string) []pkgkg.Lang {
 	if flag == "" {
 		return nil
@@ -73,6 +74,8 @@ func parseLangFlag(flag string) []pkgkg.Lang {
 			langs = append(langs, pkgkg.LangGo)
 		case "java":
 			langs = append(langs, pkgkg.LangJava)
+		case "javascript", "js":
+			langs = append(langs, pkgkg.LangJavaScript)
 		}
 	}
 	return langs

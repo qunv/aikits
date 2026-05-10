@@ -139,3 +139,65 @@ func TestWalkSkipsVendor(t *testing.T) {
 		t.Errorf("expected pkg/main.go, got %s", files[0].RelPath)
 	}
 }
+
+func TestWalkFindsJavaScriptFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "app.js"))
+	writeTestFile(t, filepath.Join(dir, "module.mjs"))
+	writeTestFile(t, filepath.Join(dir, "common.cjs"))
+	writeTestFile(t, filepath.Join(dir, "component.jsx"))
+	writeTestFile(t, filepath.Join(dir, "skip.ts")) // TypeScript not yet supported
+
+	w := indexer.NewWalker(dir, nil)
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+
+	langs := make(map[string]int)
+	for _, f := range files {
+		langs[f.Lang]++
+	}
+	if langs["javascript"] != 4 {
+		t.Errorf("expected 4 javascript files, got %d; all: %+v", langs["javascript"], langs)
+	}
+	if langs["javascript"]+langs["go"]+langs["java"] != len(files) {
+		t.Errorf("unexpected langs in results: %+v", langs)
+	}
+}
+
+func TestWalkJavaScriptLangFilter(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "main.go"))
+	writeTestFile(t, filepath.Join(dir, "app.js"))
+
+	w := indexer.NewWalker(dir, []string{"go"})
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	for _, f := range files {
+		if f.Lang == "javascript" {
+			t.Errorf("javascript file should not be discovered with --lang go, found: %s", f.RelPath)
+		}
+	}
+	if len(files) != 1 || files[0].Lang != "go" {
+		t.Errorf("expected 1 go file, got %+v", files)
+	}
+}
+
+func TestWalkJavaScriptOnlyFilter(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "main.go"))
+	writeTestFile(t, filepath.Join(dir, "app.js"))
+	writeTestFile(t, filepath.Join(dir, "Foo.java"))
+
+	w := indexer.NewWalker(dir, []string{"javascript"})
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	if len(files) != 1 || files[0].Lang != "javascript" {
+		t.Errorf("expected 1 javascript file, got %+v", files)
+	}
+}
