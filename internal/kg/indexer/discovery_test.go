@@ -301,3 +301,40 @@ func TestWalkJavaScriptOnlyFilter(t *testing.T) {
 		t.Errorf("expected 1 javascript file, got %+v", files)
 	}
 }
+
+func TestWalkFindsHTMLFiles(t *testing.T) {
+dir := t.TempDir()
+writeTestFile(t, filepath.Join(dir, "index.html"))
+writeTestFile(t, filepath.Join(dir, "about.htm"))
+writeTestFile(t, filepath.Join(dir, "main.go"))
+
+w := indexer.NewWalker(dir, nil)
+files, err := w.Walk()
+if err != nil {
+t.Fatalf("Walk: %v", err)
+}
+
+langs := make(map[string]int)
+for _, f := range files {
+langs[f.Lang]++
+}
+if langs["html"] != 2 {
+t.Errorf("expected 2 html files, got %d; all: %+v", langs["html"], langs)
+}
+}
+
+func TestWalkHTMLLangFilter(t *testing.T) {
+dir := t.TempDir()
+writeTestFile(t, filepath.Join(dir, "index.html"))
+writeTestFile(t, filepath.Join(dir, "main.go"))
+writeTestFile(t, filepath.Join(dir, "App.java"))
+
+w := indexer.NewWalker(dir, []string{"html"})
+files, err := w.Walk()
+if err != nil {
+t.Fatalf("Walk: %v", err)
+}
+if len(files) != 1 || files[0].Lang != "html" {
+t.Errorf("expected 1 html file, got %+v", files)
+}
+}

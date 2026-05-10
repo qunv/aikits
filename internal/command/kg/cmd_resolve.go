@@ -52,7 +52,7 @@ func newKgResolveCmd(_ *config.Config, log *zap.Logger) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&langFlag, "lang", "go", "language: go|java|javascript")
+	cmd.Flags().StringVar(&langFlag, "lang", "go", "language: go|java|javascript|html")
 	cmd.Flags().IntVar(&budget, "budget", 1000, "maximum callsites to resolve")
 	cmd.Flags().BoolVar(&mavenDownloadDeps, "maven-download-deps", false, "run 'mvn dependency:resolve' before jdtls startup (Java only)")
 	return cmd

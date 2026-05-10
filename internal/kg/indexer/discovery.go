@@ -30,6 +30,7 @@ func NewWalker(repoRoot string, langs []string) *Walker {
 		langMap["go"] = true
 		langMap["java"] = true
 		langMap["javascript"] = true
+		langMap["html"] = true
 	} else {
 		for _, l := range langs {
 			langMap[strings.ToLower(l)] = true
@@ -93,6 +94,8 @@ func langForFile(path string) string {
 		return "java"
 	case ".js", ".mjs", ".cjs", ".jsx":
 		return "javascript"
+	case ".html", ".htm":
+		return "html"
 	default:
 		return ""
 	}
