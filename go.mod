@@ -13,6 +13,7 @@ require (
 	github.com/tree-sitter/tree-sitter-html v0.23.2
 	github.com/tree-sitter/tree-sitter-java v0.23.5
 	github.com/tree-sitter/tree-sitter-javascript v0.23.1
+	github.com/tree-sitter/tree-sitter-typescript v0.23.2
 	github.com/wailsapp/wails/v2 v2.12.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/term v0.42.0
@@ -73,7 +74,6 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
-	github.com/tree-sitter/tree-sitter-typescript v0.23.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
