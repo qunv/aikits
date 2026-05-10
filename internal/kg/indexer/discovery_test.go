@@ -186,6 +186,106 @@ func TestWalkJavaScriptLangFilter(t *testing.T) {
 	}
 }
 
+func TestWalkRespectsRootAnchoredGitignore(t *testing.T) {
+	dir := t.TempDir()
+
+	// Patterns like /build/, /dist/, /bin/ are root-anchored.
+	gitignore := "/build/\n/dist/\nbin/\n"
+	if err := os.WriteFile(filepath.Join(dir, ".gitignore"), []byte(gitignore), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	writeTestFile(t, filepath.Join(dir, "build", "output.go"))
+	writeTestFile(t, filepath.Join(dir, "dist", "bundle.js"))
+	writeTestFile(t, filepath.Join(dir, "bin", "tool.go"))
+	writeTestFile(t, filepath.Join(dir, "src", "main.go"))
+
+	w := indexer.NewWalker(dir, nil)
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	if len(files) != 1 {
+		t.Errorf("expected 1 file (src/main.go), got %d", len(files))
+		for _, f := range files {
+			t.Logf("  found: %s", f.RelPath)
+		}
+		return
+	}
+	if files[0].RelPath != "src/main.go" {
+		t.Errorf("expected src/main.go, got %s", files[0].RelPath)
+	}
+}
+
+func TestWalkRespectsNegationInGitignore(t *testing.T) {
+	dir := t.TempDir()
+
+	// .env* ignores all .env files, but !.env.example re-includes one.
+	gitignore := ".env*\n!.env.example\n"
+	if err := os.WriteFile(filepath.Join(dir, ".gitignore"), []byte(gitignore), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// .env.example is a Go file for test purposes — use a .go extension trick:
+	// Instead, write a normal .go that should be indexed and a non-Go file
+	// to test the ignorer logic directly by writing a wrapper test.
+
+	// We test via the exported Walker on .go files, so simulate with a made-up pattern.
+	// Pattern: ignore "ignored_*.go" but re-include "ignored_keep.go"
+	gitignore2 := "ignored_*.go\n!ignored_keep.go\n"
+	if err := os.WriteFile(filepath.Join(dir, ".gitignore"), []byte(gitignore2), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	writeTestFile(t, filepath.Join(dir, "ignored_a.go"))
+	writeTestFile(t, filepath.Join(dir, "ignored_keep.go"))
+	writeTestFile(t, filepath.Join(dir, "real.go"))
+
+	w := indexer.NewWalker(dir, nil)
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	found := make(map[string]bool)
+	for _, f := range files {
+		found[f.RelPath] = true
+	}
+	if found["ignored_a.go"] {
+		t.Error("ignored_a.go should be excluded")
+	}
+	if !found["ignored_keep.go"] {
+		t.Error("ignored_keep.go should be re-included by negation pattern")
+	}
+	if !found["real.go"] {
+		t.Error("real.go should be included")
+	}
+}
+
+func TestWalkRespectsNestedGitignorePath(t *testing.T) {
+	dir := t.TempDir()
+
+	// Pattern like /frontend/node_modules/ — path-based without root anchoring via slash in middle.
+	gitignore := "/frontend/node_modules/\n"
+	if err := os.WriteFile(filepath.Join(dir, ".gitignore"), []byte(gitignore), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	writeTestFile(t, filepath.Join(dir, "frontend", "node_modules", "lib.js"))
+	writeTestFile(t, filepath.Join(dir, "frontend", "src", "app.js"))
+
+	w := indexer.NewWalker(dir, nil)
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	if len(files) != 1 {
+		t.Errorf("expected 1 file (frontend/src/app.js), got %d", len(files))
+		for _, f := range files {
+			t.Logf("  found: %s", f.RelPath)
+		}
+		return
+	}
+	if files[0].RelPath != "frontend/src/app.js" {
+		t.Errorf("expected frontend/src/app.js, got %s", files[0].RelPath)
+	}
+}
+
 func TestWalkJavaScriptOnlyFilter(t *testing.T) {
 	dir := t.TempDir()
 	writeTestFile(t, filepath.Join(dir, "main.go"))

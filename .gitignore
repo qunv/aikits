@@ -1,7 +1,7 @@
 .DS_Store
 .env*
 !.env.example
-.idea
+.idea/
 .npmrc
 .editorconfig
 
@@ -11,9 +11,9 @@
 /.react-router/
 /build/
 /dist/
-.kg
-/frontend/node_modules
-/frontend/dist
-.github
-.worktrees
-bin
+.kg/
+/frontend/node_modules/
+/frontend/dist/
+.github/
+.worktrees/
+bin/

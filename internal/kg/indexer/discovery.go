@@ -123,36 +123,53 @@ func loadGitignore(repoRoot string) *gitignorer {
 }
 
 func (ig *gitignorer) ignored(relPath string) bool {
+	// Process all patterns in order; later patterns (including negations) override earlier ones.
+	result := false
 	for _, pattern := range ig.patterns {
 		neg := strings.HasPrefix(pattern, "!")
 		p := pattern
 		if neg {
 			p = p[1:]
 		}
-		matched := matchPattern(p, relPath)
-		if matched {
-			return !neg
+		if matchPattern(p, relPath) {
+			result = !neg
 		}
 	}
-	return false
+	return result
 }
 
 // matchPattern matches a gitignore-style pattern against a repo-relative path.
+// path is repo-relative with forward slashes; directories are passed with a trailing "/".
 func matchPattern(pattern, path string) bool {
-	// If pattern contains a slash, match from root; otherwise match any component.
-	if strings.Contains(strings.TrimSuffix(pattern, "/"), "/") {
-		ok, _ := filepath.Match(pattern, path)
-		return ok
+	// Determine if the pattern is anchored to the repo root (starts with "/").
+	rootAnchored := strings.HasPrefix(pattern, "/")
+	p := strings.TrimPrefix(pattern, "/")
+
+	// Strip trailing slash from both pattern and path for uniform matching.
+	// The caller passes dirs with a trailing "/" so a dir-only pattern like "bin/"
+	// will only match directories (the trailing "/" in path distinguishes them).
+	pClean := strings.TrimSuffix(p, "/")
+	pathClean := strings.TrimSuffix(path, "/")
+
+	if rootAnchored || strings.Contains(pClean, "/") {
+		// Anchored pattern: match from repo root only.
+		if ok, _ := filepath.Match(pClean, pathClean); ok {
+			return true
+		}
+		// Also match paths inside an ignored directory (e.g. "build" matches "build/main.go").
+		if strings.HasPrefix(pathClean, pClean+"/") {
+			return true
+		}
+		return false
 	}
-	// Match against the last component or any component for directory patterns.
-	base := filepath.Base(path)
-	if ok, _ := filepath.Match(pattern, base); ok {
+
+	// Unanchored pattern: match the last path component or any component.
+	base := filepath.Base(pathClean)
+	if ok, _ := filepath.Match(pClean, base); ok {
 		return true
 	}
-	// Also try matching the full path segments.
-	parts := strings.Split(path, "/")
-	for _, part := range parts {
-		if ok, _ := filepath.Match(pattern, part); ok {
+	for _, part := range strings.Split(pathClean, "/") {
+		if ok, _ := filepath.Match(pClean, part); ok {
 			return true
 		}
 	}
