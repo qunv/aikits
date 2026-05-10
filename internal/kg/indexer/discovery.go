@@ -12,7 +12,7 @@ import (
 type DiscoveredFile struct {
 	AbsPath string
 	RelPath string // repo-relative, forward-slash
-	Lang    string // "go", "java", or "javascript"
+	Lang    string // "go", "java", "javascript", "html", or "css"
 }
 
 // Walker discovers source files under repoRoot, respecting .gitignore patterns.
@@ -31,6 +31,7 @@ func NewWalker(repoRoot string, langs []string) *Walker {
 		langMap["java"] = true
 		langMap["javascript"] = true
 		langMap["html"] = true
+		langMap["css"] = true
 	} else {
 		for _, l := range langs {
 			langMap[strings.ToLower(l)] = true
@@ -96,6 +97,8 @@ func langForFile(path string) string {
 		return "javascript"
 	case ".html", ".htm":
 		return "html"
+	case ".css":
+		return "css"
 	default:
 		return ""
 	}

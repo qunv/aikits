@@ -74,6 +74,7 @@ func (kg *KG) Index(_ context.Context, opts IndexOptions) (*IndexResult, error) 
 		"java":       &kglang.JavaIndexer{},
 		"javascript": &kglang.JavaScriptIndexer{},
 		"html":       &kglang.HTMLIndexer{},
+		"css":        &kglang.CSSIndexer{},
 	}
 
 	sem := make(chan struct{}, jobs)

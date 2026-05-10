@@ -11,6 +11,7 @@ const (
 	LangJava       Lang = "java"
 	LangJavaScript Lang = "javascript"
 	LangHTML       Lang = "html"
+	LangCSS        Lang = "css"
 )
 
 // ExportFormat is the output format for graph export.
