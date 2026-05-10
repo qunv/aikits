@@ -6,6 +6,8 @@ import (
 	kgdb "aikits/internal/kg/db"
 	goedge "aikits/internal/kg/indexer/golang/edgekind"
 	javaedge "aikits/internal/kg/indexer/java/edgekind"
+	jsedge "aikits/internal/kg/indexer/javascript/edgekind"
+	tsedge "aikits/internal/kg/indexer/typescript/edgekind"
 	"aikits/internal/storage"
 )
 
@@ -23,6 +25,8 @@ type EdgeGenerator interface {
 var registeredEdgeGens = []EdgeGenerator{
 	goEdgeGen{},
 	javaEdgeGen{},
+	jsEdgeGen{},
+	tsEdgeGen{},
 }
 
 // --- Go edge generator ---
@@ -80,6 +84,36 @@ func (javaEdgeGen) InsertReferencesEdges(db *sql.DB, repoID int64) error {
 	return javaedge.InsertReferencesEdges(db, repoID)
 }
 
+// --- JavaScript edge generator ---
+
+type jsEdgeGen struct{}
+
+func (jsEdgeGen) InsertStructuralEdges(db *sql.DB, repoID int64) error {
+	return jsedge.InsertContainsEdges(db, repoID)
+}
+
+func (jsEdgeGen) InsertImportEdges(_ *sql.DB, _ int64) error    { return nil }
+func (jsEdgeGen) InsertExtendsEdges(_ *sql.DB, _ int64) error   { return nil }
+func (jsEdgeGen) InsertOverridesEdges(_ *sql.DB, _ int64) error { return nil }
+func (jsEdgeGen) InsertReferencesEdges(db *sql.DB, repoID int64) error {
+	return jsedge.InsertReferencesEdges(db, repoID)
+}
+
+// --- TypeScript edge generator ---
+
+type tsEdgeGen struct{}
+
+func (tsEdgeGen) InsertStructuralEdges(db *sql.DB, repoID int64) error {
+	return tsedge.InsertContainsEdges(db, repoID)
+}
+
+func (tsEdgeGen) InsertImportEdges(_ *sql.DB, _ int64) error    { return nil }
+func (tsEdgeGen) InsertExtendsEdges(_ *sql.DB, _ int64) error   { return nil }
+func (tsEdgeGen) InsertOverridesEdges(_ *sql.DB, _ int64) error { return nil }
+func (tsEdgeGen) InsertReferencesEdges(db *sql.DB, repoID int64) error {
+	return tsedge.InsertReferencesEdges(db, repoID)
+}
+
 // --- Per-file CALLS edge inserters ---
 
 // goCallsEdge implements kgdb.CallsEdgeInserter for Go.
@@ -96,13 +130,37 @@ func (javaCallsEdge) InsertCallsEdges(q storage.Querier, repoID, fileID int64) e
 	return javaedge.InsertCallsEdges(q, repoID, fileID)
 }
 
+// jsCallsEdge implements kgdb.CallsEdgeInserter for JavaScript.
+type jsCallsEdge struct{}
+
+func (jsCallsEdge) InsertCallsEdges(q storage.Querier, repoID, fileID int64) error {
+	return jsedge.InsertCallsEdges(q, repoID, fileID)
+}
+
+// tsCallsEdge implements kgdb.CallsEdgeInserter for TypeScript.
+type tsCallsEdge struct{}
+
+func (tsCallsEdge) InsertCallsEdges(q storage.Querier, repoID, fileID int64) error {
+	return tsedge.InsertCallsEdges(q, repoID, fileID)
+}
+
 // DefaultCallsEdgeInserters returns CALLS edge inserters for all supported languages.
 // Pass the result to kgdb.BatchWrite; each inserter's SQL is scoped to its own language.
 func DefaultCallsEdgeInserters() []kgdb.CallsEdgeInserter {
-	return []kgdb.CallsEdgeInserter{goCallsEdge{}, javaCallsEdge{}}
+	return []kgdb.CallsEdgeInserter{goCallsEdge{}, javaCallsEdge{}, jsCallsEdge{}, tsCallsEdge{}}
 }
 
 // --- Exported Generate* functions (replace the former kgdb.Generate* set) ---
+
+// GenerateCallsEdges rebuilds all heuristic CALLS edges for languages that require a
+// post-processing pass (JS/TS) to handle cross-file callees. Must be called after all
+// BatchWrite calls so every callee symbol is already in the symbols table.
+func GenerateCallsEdges(db *sql.DB, repoID int64) error {
+	if err := jsedge.InsertBulkCallsEdges(db, repoID); err != nil {
+		return err
+	}
+	return tsedge.InsertBulkCallsEdges(db, repoID)
+}
 
 // GenerateStructuralEdges inserts DECLARES, CONTAINS, and IMPLEMENTS edges for all languages.
 // IMPLEMENTS depends on CONTAINS being populated first within each language pass.

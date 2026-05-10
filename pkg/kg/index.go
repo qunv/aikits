@@ -176,6 +176,9 @@ func (kg *KG) Index(_ context.Context, opts IndexOptions) (*IndexResult, error) 
 		out.Callsites += len(r.ext.Callsites)
 	}
 
+	if err := kglang.GenerateCallsEdges(kg.db, kg.repo.ID); err != nil {
+		kg.log.Warn("generate calls edges", zap.Error(err))
+	}
 	if err := kglang.GenerateStructuralEdges(kg.db, kg.repo.ID); err != nil {
 		kg.log.Warn("generate structural edges", zap.Error(err))
 	}

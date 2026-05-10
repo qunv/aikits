@@ -385,3 +385,143 @@ func TestUppercaseTSXExtension(t *testing.T) {
 		t.Errorf("expected function 'App' from uppercase .TSX file, got %+v", r.Symbols)
 	}
 }
+
+// ─── HOC-wrapped components ───────────────────────────────────────────────────
+
+func TestHOCWrappedArrowFunction(t *testing.T) {
+	r := extractTSX(t, `
+import { observer } from 'mobx-react-lite';
+const MyComp = observer(() => { return <div/>; });
+`)
+	if !findSym(t, r, "MyComp", "arrow_function") {
+		t.Errorf("expected arrow_function symbol 'MyComp' from observer HOC, got %+v", r.Symbols)
+	}
+}
+
+func TestHOCCallsiteExtracted(t *testing.T) {
+	r := extractTSX(t, `
+import { observer } from 'mobx-react-lite';
+const MyComp = observer(() => {
+  doSomething();
+  return <div/>;
+});
+`)
+	if !findCallsite(t, r, "doSomething") {
+		t.Errorf("expected callsite 'doSomething' inside HOC body, got %+v", r.Callsites)
+	}
+}
+
+func TestHOCObserverCallsiteRecorded(t *testing.T) {
+	r := extractTSX(t, `const X = observer(() => <div/>);`)
+	if !findCallsite(t, r, "observer") {
+		t.Errorf("expected callsite 'observer' from HOC call, got %+v", r.Callsites)
+	}
+}
+
+// ─── JSX callsites ────────────────────────────────────────────────────────────
+
+func TestJSXSelfClosingComponentCallsite(t *testing.T) {
+	r := extractTSX(t, `function App() { return <MyButton label="click"/>; }`)
+	if !findCallsite(t, r, "MyButton") {
+		t.Errorf("expected callsite 'MyButton' from JSX self-closing element, got %+v", r.Callsites)
+	}
+}
+
+func TestJSXOpeningComponentCallsite(t *testing.T) {
+	r := extractTSX(t, `function App() { return <MyWrapper><span/></MyWrapper>; }`)
+	if !findCallsite(t, r, "MyWrapper") {
+		t.Errorf("expected callsite 'MyWrapper' from JSX opening element, got %+v", r.Callsites)
+	}
+}
+
+func TestJSXHTMLTagNotCallsite(t *testing.T) {
+	r := extractTSX(t, `function App() { return <div><span/></div>; }`)
+	if findCallsite(t, r, "div") {
+		t.Errorf("expected no callsite for HTML tag 'div', got %+v", r.Callsites)
+	}
+	if findCallsite(t, r, "span") {
+		t.Errorf("expected no callsite for HTML tag 'span'")
+	}
+}
+
+// ─── Type references (REFERENCES edges) ──────────────────────────────────────
+
+func findTypeRef(r TSExtractResult, srcFQNSuffix, typeName string) bool {
+	for _, ref := range r.TypeRefs {
+		if ref.TypeName == typeName &&
+			(ref.SrcFQN == srcFQNSuffix || len(ref.SrcFQN) >= len(srcFQNSuffix) &&
+				ref.SrcFQN[len(ref.SrcFQN)-len(srcFQNSuffix):] == srcFQNSuffix) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestAsExpressionTypeRef(t *testing.T) {
+	// `link as KGEdge` inside handleLinkClick should produce a type ref.
+	r := extract(t, `
+interface KGEdge { id: number; }
+const handleLinkClick = (link: any) => {
+    const e = link as KGEdge;
+};
+`)
+	if !findTypeRef(r, "handleLinkClick", "KGEdge") {
+		t.Errorf("expected type ref KGEdge from handleLinkClick (as_expression), got %+v", r.TypeRefs)
+	}
+}
+
+func TestTypeAnnotationRef(t *testing.T) {
+	// `const e: KGEdge` variable annotation should produce a type ref.
+	r := extract(t, `
+interface KGEdge { id: number; }
+function process(link: any) {
+    const e: KGEdge = link;
+}
+`)
+	if !findTypeRef(r, "process", "KGEdge") {
+		t.Errorf("expected type ref KGEdge from process (type_annotation), got %+v", r.TypeRefs)
+	}
+}
+
+func TestHOCTypeRef(t *testing.T) {
+	// Type ref inside HOC-wrapped arrow function body.
+	r := extractTSX(t, `
+interface KGEdge { id: number; }
+const handleLinkClick = useCallback((link: any) => {
+    const e = link as KGEdge;
+}, []);
+`)
+	if !findTypeRef(r, "handleLinkClick", "KGEdge") {
+		t.Errorf("expected type ref KGEdge from handleLinkClick (HOC+as_expression), got %+v", r.TypeRefs)
+	}
+}
+
+func TestPrimitiveTypeNotRef(t *testing.T) {
+	// Built-in types like string, number, any must not be recorded as type refs.
+	r := extract(t, `
+function foo(x: string, y: number): boolean {
+    const z = x as any;
+    return true;
+}
+`)
+	for _, ref := range r.TypeRefs {
+		switch ref.TypeName {
+		case "string", "number", "boolean", "any":
+			t.Errorf("primitive type %q should not produce a type ref", ref.TypeName)
+		}
+	}
+}
+
+func TestNoTypeRefOutsideCallable(t *testing.T) {
+	// Top-level type annotations (not inside a function body) should not generate refs
+	// because we have no caller to attach them to.
+	r := extract(t, `
+interface KGEdge { id: number; }
+const e: KGEdge = { id: 1 };
+`)
+	for _, ref := range r.TypeRefs {
+		if ref.TypeName == "KGEdge" {
+			t.Errorf("should not produce type ref for top-level variable annotation outside a function, got %+v", r.TypeRefs)
+		}
+	}
+}

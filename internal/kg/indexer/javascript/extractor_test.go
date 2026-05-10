@@ -203,3 +203,51 @@ func TestSymbolLineNumbers(t *testing.T) {
 		}
 	}
 }
+
+// ─── Type refs (instanceof / new / HOC) ──────────────────────────────────────
+
+func findTypeRef(r JSExtractResult, typeName string) bool {
+for _, ref := range r.TypeRefs {
+if ref.TypeName == typeName {
+return true
+}
+}
+return false
+}
+
+func TestInstanceofTypeRef(t *testing.T) {
+r := extract(t, `function check(x) { return x instanceof MyClass; }`)
+if !findTypeRef(r, "MyClass") {
+t.Errorf("expected type ref 'MyClass' from instanceof, got %+v", r.TypeRefs)
+}
+}
+
+func TestNewExpressionTypeRef(t *testing.T) {
+r := extract(t, `function create() { return new MyService(); }`)
+if !findTypeRef(r, "MyService") {
+t.Errorf("expected type ref 'MyService' from new expression, got %+v", r.TypeRefs)
+}
+}
+
+func TestInstanceofPrimitiveSkipped(t *testing.T) {
+r := extract(t, `function isArr(x) { return x instanceof Array; }`)
+if findTypeRef(r, "Array") {
+t.Errorf("Array is a primitive, should not produce type ref")
+}
+}
+
+func TestHOCArrowFunctionJS(t *testing.T) {
+r := extract(t, `const MyComp = observer(() => { return null; });`)
+if !findSym(t, r, "MyComp", "arrow_function") {
+t.Errorf("expected HOC-wrapped arrow_function 'MyComp', got %+v", r.Symbols)
+}
+}
+
+func TestInstanceofCallerFQN(t *testing.T) {
+r := extract(t, `function check(x) { return x instanceof MyClass; }`)
+for _, ref := range r.TypeRefs {
+if ref.TypeName == "MyClass" && ref.SrcFQN != "src/utils/helpers.check" {
+t.Errorf("instanceof ref SrcFQN = %q, want 'src/utils/helpers.check'", ref.SrcFQN)
+}
+}
+}

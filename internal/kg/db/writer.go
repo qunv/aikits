@@ -401,13 +401,13 @@ func BatchWrite(sqlDB *sql.DB, fileRow *FileRow, symbols []SymbolRow, edges []Ed
 }
 
 // populateCallerIDs sets caller_symbol_id on callsites whose caller is unknown by finding the
-// smallest enclosing function/method symbol by byte span.
+// smallest enclosing function/method/arrow_function symbol by byte span.
 func populateCallerIDs(q storage.Querier, fileID int64) error {
 	_, err := q.Exec(`
 		UPDATE callsites SET caller_symbol_id = (
 			SELECT s.id FROM symbols s
 			WHERE s.file_id = callsites.file_id
-			  AND s.kind IN ('function', 'method')
+			  AND s.kind IN ('function', 'method', 'arrow_function')
 			  AND s.start_byte <= callsites.start_byte
 			  AND s.end_byte   >= callsites.end_byte
 			ORDER BY (s.end_byte - s.start_byte) ASC

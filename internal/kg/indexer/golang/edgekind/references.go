@@ -23,8 +23,8 @@ func InsertReferencesEdges(sqlDB *sql.DB, repoID int64) error {
 	}
 
 	_, err := sqlDB.Exec(`
-		INSERT OR IGNORE INTO edges (repo_id, kind, src_symbol_id, dst_symbol_id, confidence, provenance)
-		SELECT r.repo_id, 'REFERENCES', r.src_symbol_id, dst.id, 0.4, 'heuristic'
+		INSERT OR IGNORE INTO edges (repo_id, kind, src_symbol_id, dst_symbol_id, confidence, provenance, created_at)
+		SELECT r.repo_id, 'REFERENCES', r.src_symbol_id, dst.id, 0.4, 'heuristic', datetime('now')
 		FROM refs r
 		JOIN symbols src ON src.id = r.src_symbol_id AND src.lang = 'go'
 		JOIN symbols dst ON dst.repo_id = r.repo_id AND dst.fqn = r.ref_text

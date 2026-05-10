@@ -4,7 +4,7 @@ import { KGGetGraph } from '@wailsjs/go/main/App';
 import { useRepoStore } from '@stores/StoreContext';
 import { observer } from 'mobx-react-lite';
 import { Alert, Button, Spin } from 'antd';
-import { ThunderboltOutlined, ThunderboltFilled, ReloadOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, ThunderboltFilled, ReloadOutlined, RadarChartOutlined } from '@ant-design/icons';
 
 
 interface KGNode {
@@ -54,9 +54,67 @@ function edgeColor(kind: string): string {
   return EDGE_COLORS[kind] ?? '#bfbfbf';
 }
 
+type Layout = 'force' | 'concentric';
+
+/** Place nodes in concentric rings ordered by degree (hubs at center).
+ *  Each ring radius is computed from how many nodes it holds so nodes
+ *  never overlap, regardless of graph size.
+ */
+function computeConcentricPositions(
+  nodes: KGNode[],
+  edges: KGEdge[],
+): Map<number, { fx: number; fy: number }> {
+  const degree = new Map<number, number>(nodes.map((n) => [n.id, 0]));
+  edges.forEach((e) => {
+    degree.set(e.src, (degree.get(e.src) ?? 0) + 1);
+    degree.set(e.dst, (degree.get(e.dst) ?? 0) + 1);
+  });
+
+  const sorted = [...nodes].sort((a, b) => (degree.get(b.id) ?? 0) - (degree.get(a.id) ?? 0));
+
+  // Adapt node spacing to graph size so large graphs stay navigable
+  const total = nodes.length;
+  const minArc  = total < 100 ? 28 : total < 500 ? 18 : 12; // px between node centres
+  const minGap  = 70;  // minimum radial gap between adjacent rings
+  const innerR  = 60;  // minimum radius for the innermost ring
+
+  // Cumulative fraction of nodes per ring (inner → outer)
+  const ringFracs = [0.05, 0.15, 0.35, 1.0];
+
+  const positions = new Map<number, { fx: number; fy: number }>();
+  let start      = 0;
+  let prevRadius = 0;
+
+  ringFracs.forEach((frac, i) => {
+    const end  = Math.min(Math.ceil(frac * sorted.length), sorted.length);
+    const ring = sorted.slice(start, end);
+
+    // Radius must be large enough so the arc between adjacent nodes ≥ minArc
+    const minBySpacing = ring.length <= 1
+      ? innerR
+      : (ring.length * minArc) / (2 * Math.PI);
+
+    const r = Math.max(
+      i === 0 ? innerR : prevRadius + minGap,
+      minBySpacing,
+    );
+
+    ring.forEach((node, j) => {
+      const angle = (2 * Math.PI * j) / Math.max(ring.length, 1);
+      positions.set(node.id, { fx: r * Math.cos(angle), fy: r * Math.sin(angle) });
+    });
+
+    prevRadius = r;
+    start      = end;
+  });
+
+  return positions;
+}
+
 const KnowledgeGraphPage = observer(() => {
   const repoStore = useRepoStore();
   const containerRef = useRef<HTMLDivElement>(null);
+  const fgRef = useRef<any>(null);
   const [graphData, setGraphData] = useState<{ nodes: KGNode[]; edges: KGEdge[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +122,7 @@ const KnowledgeGraphPage = observer(() => {
   const selectedRef = useRef(selected);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   const [animate, setAnimate] = useState(false);
+  const [layout, setLayout] = useState<Layout>('force');
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hlNodes, setHlNodes] = useState<Set<number>>(new Set());
   const [hlLinks, setHlLinks] = useState<Set<number>>(new Set());
@@ -124,12 +183,26 @@ const KnowledgeGraphPage = observer(() => {
     return () => obs.disconnect();
   }, []);
 
-  const fgData = useMemo(() => graphData
-    ? {
-        nodes: graphData.nodes.map((n) => ({ ...n, id: n.id })),
-        links: graphData.edges.map((e) => ({ ...e, source: e.src, target: e.dst })),
-      }
-    : { nodes: [], links: [] }, [graphData]);
+  const fgData = useMemo(() => {
+    if (!graphData) return { nodes: [], links: [] };
+    const positions = layout === 'concentric'
+      ? computeConcentricPositions(graphData.nodes, graphData.edges)
+      : null;
+    return {
+      nodes: graphData.nodes.map((n) => {
+        const pos = positions?.get(n.id);
+        return { ...n, id: n.id, ...(pos ?? { fx: undefined, fy: undefined }) };
+      }),
+      links: graphData.edges.map((e) => ({ ...e, source: e.src, target: e.dst })),
+    };
+  }, [graphData, layout]);
+
+  // Reheat force simulation when switching back from concentric
+  useEffect(() => {
+    if (layout === 'force' && fgRef.current) {
+      fgRef.current.d3ReheatSimulation();
+    }
+  }, [layout]);
 
   return (
     <div className="flex flex-col -m-4" style={{ height: 'calc(100% + 2rem)' }}>
@@ -167,6 +240,7 @@ const KnowledgeGraphPage = observer(() => {
           </div>
         )}
         <ForceGraph2D
+          ref={fgRef}
           width={dimensions.width}
           height={dimensions.height}
           graphData={fgData}
@@ -201,13 +275,13 @@ const KnowledgeGraphPage = observer(() => {
             ctx.lineWidth = 4 / globalScale;
             ctx.stroke();
           }}
-          linkColor={(link: any) =>
-            hlLinks.size === 0 || hlLinks.has(link.id)
-              ? edgeColor(link.kind)
-              : '#ebebeb'
-          }
+          linkColor={(link: any) => {
+            if (hlLinks.size === 0) return edgeColor(link.kind) + '66'; // default: ~40% opacity
+            if (hlLinks.has(link.id)) return edgeColor(link.kind) + 'dd'; // selected: ~87% opacity
+            return '#e8e8e833'; // dimmed: nearly invisible
+          }}
           linkWidth={(link: any) => hlLinks.has(link.id) ? 2 : 1}
-          linkDirectionalArrowLength={4}
+          linkDirectionalArrowLength={2}
           linkDirectionalArrowRelPos={1}
           linkLabel={(link: any) => link.kind}
           onNodeClick={handleNodeClick}
@@ -216,8 +290,8 @@ const KnowledgeGraphPage = observer(() => {
           backgroundColor="#ffffff"
           enableNodeDrag
           enableZoomInteraction
-          warmupTicks={animate ? 0 : 200}
-          cooldownTicks={animate ? Infinity : 0}
+          warmupTicks={layout === 'concentric' ? 0 : (animate ? 0 : 200)}
+          cooldownTicks={layout === 'concentric' ? 0 : (animate ? Infinity : 0)}
         />
 
         {/* Bottom-left overlay: stats table + reload */}
@@ -243,6 +317,13 @@ const KnowledgeGraphPage = observer(() => {
             onClick={() => setAnimate((v) => !v)}
             title={animate ? 'Disable animation' : 'Enable animation'}
             type={animate ? 'primary' : 'default'}
+          />
+          <Button
+            size="small"
+            icon={<RadarChartOutlined />}
+            onClick={() => setLayout((v) => v === 'concentric' ? 'force' : 'concentric')}
+            title={layout === 'concentric' ? 'Switch to force layout' : 'Switch to concentric layout'}
+            type={layout === 'concentric' ? 'primary' : 'default'}
           />
         </div>
 

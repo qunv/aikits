@@ -17,6 +17,7 @@ type TSExtractResult struct {
 	Callsites   []kgdb.CallsiteRow
 	ImportPaths []string
 	SrcPkgFQN   string
+	TypeRefs    []kgdb.TypeRef
 }
 
 var (
@@ -68,5 +69,6 @@ func ExtractTS(src []byte, relPath string, repoID, fileID int64) TSExtractResult
 		Callsites:   w.callsites,
 		ImportPaths: w.imports,
 		SrcPkgFQN:   w.fileModule,
+		TypeRefs:    w.typeRefs,
 	}
 }

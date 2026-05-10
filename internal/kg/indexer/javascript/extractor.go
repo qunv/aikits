@@ -22,11 +22,15 @@ type jsWalker struct {
 	// classStack tracks the enclosing class name during body traversal.
 	classStack []string
 
+	// callerStack tracks the FQN of the enclosing named symbol for callsite attribution.
+	callerStack []string
+
 	importSeen map[string]bool
 
 	symbols   []kgdb.SymbolRow
 	callsites []kgdb.CallsiteRow
 	imports   []string
+	typeRefs  []kgdb.TypeRef
 
 	// relPath is set once at construction; used to derive fileModule.
 	relPath string
@@ -125,10 +129,13 @@ func (w *jsWalker) visitFunctionDecl(node *ts.Node) {
 		return
 	}
 	name := w.text(nameNode)
+	fqn := w.fqn(name)
 	sig := w.buildFuncSig(name, node)
-	w.symbols = append(w.symbols, w.sym(name, "function", w.fqn(name), sig, node))
+	w.symbols = append(w.symbols, w.sym(name, "function", fqn, sig, node))
 	if body := node.ChildByFieldName("body"); body != nil {
+		w.callerStack = append(w.callerStack, fqn)
 		w.walkForCallsites(body)
+		w.callerStack = w.callerStack[:len(w.callerStack)-1]
 	}
 }
 
@@ -165,10 +172,13 @@ func (w *jsWalker) visitMethodDef(node *ts.Node) {
 		return
 	}
 	name := w.text(nameNode)
+	fqn := w.fqn(name)
 	sig := w.buildFuncSig(name, node)
-	w.symbols = append(w.symbols, w.sym(name, "method", w.fqn(name), sig, node))
+	w.symbols = append(w.symbols, w.sym(name, "method", fqn, sig, node))
 	if body := node.ChildByFieldName("body"); body != nil {
+		w.callerStack = append(w.callerStack, fqn)
 		w.walkForCallsites(body)
+		w.callerStack = w.callerStack[:len(w.callerStack)-1]
 	}
 }
 
@@ -193,36 +203,72 @@ func (w *jsWalker) visitVarDeclarator(node *ts.Node) {
 		return
 	}
 	name := w.text(nameNode)
+	fqn := w.fqn(name)
 	valNode := node.ChildByFieldName("value")
 	if valNode == nil {
-		w.symbols = append(w.symbols, w.sym(name, "variable", w.fqn(name), name, node))
+		w.symbols = append(w.symbols, w.sym(name, "variable", fqn, name, node))
 		return
 	}
 	switch valNode.Kind() {
 	case "function_expression":
 		sig := w.buildFuncSig(name, valNode)
-		w.symbols = append(w.symbols, w.sym(name, "function", w.fqn(name), sig, node))
+		w.symbols = append(w.symbols, w.sym(name, "function", fqn, sig, node))
 		if body := valNode.ChildByFieldName("body"); body != nil {
+			w.callerStack = append(w.callerStack, fqn)
 			w.walkForCallsites(body)
+			w.callerStack = w.callerStack[:len(w.callerStack)-1]
 		}
 	case "arrow_function":
 		sig := w.buildFuncSig(name, valNode)
-		w.symbols = append(w.symbols, w.sym(name, "arrow_function", w.fqn(name), sig, node))
+		w.symbols = append(w.symbols, w.sym(name, "arrow_function", fqn, sig, node))
 		if body := valNode.ChildByFieldName("body"); body != nil {
+			w.callerStack = append(w.callerStack, fqn)
 			w.walkForCallsites(body)
+			w.callerStack = w.callerStack[:len(w.callerStack)-1]
+		}
+	case "call_expression":
+		// HOC pattern: const X = observer(() => { ... }) or connect(...)(() => { ... })
+		// Register X as a named arrow_function if the first argument is an arrow_function.
+		if firstFuncArg := w.firstArrowArg(valNode); firstFuncArg != nil {
+			sig := w.buildFuncSig(name, firstFuncArg)
+			w.symbols = append(w.symbols, w.sym(name, "arrow_function", fqn, sig, node))
+			if body := firstFuncArg.ChildByFieldName("body"); body != nil {
+				w.callerStack = append(w.callerStack, fqn)
+				w.walkForCallsites(body)
+				w.callerStack = w.callerStack[:len(w.callerStack)-1]
+			}
+		} else {
+			w.symbols = append(w.symbols, w.sym(name, "variable", fqn, name, node))
+			w.walkForCallsites(valNode)
 		}
 	case "class":
-		w.symbols = append(w.symbols, w.sym(name, "class", w.fqn(name), "class "+name, node))
+		w.symbols = append(w.symbols, w.sym(name, "class", fqn, "class "+name, node))
 		w.classStack = append(w.classStack, name)
 		if body := valNode.ChildByFieldName("body"); body != nil {
 			w.walkClassBody(body)
 		}
 		w.classStack = w.classStack[:len(w.classStack)-1]
 	default:
-		w.symbols = append(w.symbols, w.sym(name, "variable", w.fqn(name), name, node))
+		w.symbols = append(w.symbols, w.sym(name, "variable", fqn, name, node))
 		// Walk the value for nested calls (e.g. require("...")).
 		w.walkForCallsites(valNode)
 	}
+}
+
+// firstArrowArg returns the first arrow_function argument of a call_expression, if any.
+func (w *jsWalker) firstArrowArg(callNode *ts.Node) *ts.Node {
+	args := callNode.ChildByFieldName("arguments")
+	if args == nil {
+		return nil
+	}
+	n := args.ChildCount()
+	for i := uint(0); i < n; i++ {
+		child := args.Child(i)
+		if child != nil && child.Kind() == "arrow_function" {
+			return child
+		}
+	}
+	return nil
 }
 
 func (w *jsWalker) visitExportStatement(node *ts.Node) {
@@ -291,14 +337,57 @@ func (w *jsWalker) walkForCallsites(node *ts.Node) {
 	if node == nil || node.IsError() || node.IsMissing() {
 		return
 	}
-	if node.Kind() == "call_expression" {
+	switch node.Kind() {
+	case "call_expression":
 		w.visitCallExpr(node, nil)
 		return
+	case "binary_expression":
+		// instanceof: `x instanceof MyClass` → REFERENCES edge to MyClass
+		if node.ChildCount() == 3 {
+			op := node.Child(1)
+			rhs := node.Child(2)
+			if op != nil && op.Kind() == "instanceof" && rhs != nil && rhs.Kind() == "identifier" {
+				w.collectTypeRef(w.text(rhs))
+			}
+		}
+	case "new_expression":
+		// `new MyClass(...)` → REFERENCES edge to MyClass (constructor call)
+		if ctorNode := node.ChildByFieldName("constructor"); ctorNode != nil && ctorNode.Kind() == "identifier" {
+			w.collectTypeRef(w.text(ctorNode))
+		}
 	}
 	n := node.ChildCount()
 	for i := uint(0); i < n; i++ {
 		w.walkForCallsites(node.Child(i))
 	}
+}
+
+// collectTypeRef records a type reference from the current enclosing symbol.
+func (w *jsWalker) collectTypeRef(typeName string) {
+	if typeName == "" || isJSPrimitive(typeName) {
+		return
+	}
+	caller := ""
+	if len(w.callerStack) > 0 {
+		caller = w.callerStack[len(w.callerStack)-1]
+	}
+	w.typeRefs = append(w.typeRefs, kgdb.TypeRef{
+		SrcFQN:   caller,
+		TypeName: typeName,
+	})
+}
+
+// isJSPrimitive reports whether name is a JS built-in that should not produce REFERENCES edges.
+func isJSPrimitive(name string) bool {
+	switch name {
+	case "Array", "Object", "Function", "Promise", "Map", "Set", "WeakMap", "WeakSet",
+		"Date", "Error", "RegExp", "Event", "Element", "Node", "Math", "JSON",
+		"Boolean", "Number", "String", "Symbol", "BigInt", "null", "undefined",
+		"HTMLElement", "EventTarget", "XMLHttpRequest", "URL", "Blob", "File",
+		"Window", "Document", "console":
+		return true
+	}
+	return false
 }
 
 func (w *jsWalker) visitCallExpr(node *ts.Node, _ *ts.Node) {

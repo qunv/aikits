@@ -15,6 +15,7 @@ type JSExtractResult struct {
 	Callsites   []kgdb.CallsiteRow
 	ImportPaths []string
 	SrcPkgFQN   string
+	TypeRefs    []kgdb.TypeRef
 }
 
 var (
@@ -48,5 +49,6 @@ func ExtractJS(src []byte, relPath string, repoID, fileID int64) JSExtractResult
 		Callsites:   w.callsites,
 		ImportPaths: w.imports,
 		SrcPkgFQN:   w.fileModule,
+		TypeRefs:    w.typeRefs,
 	}
 }
