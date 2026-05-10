@@ -73,6 +73,7 @@ func (kg *KG) Index(_ context.Context, opts IndexOptions) (*IndexResult, error) 
 		"go":         kglang.NewGoIndexer(kg.root),
 		"java":       &kglang.JavaIndexer{},
 		"javascript": &kglang.JavaScriptIndexer{},
+		"typescript": &kglang.TypeScriptIndexer{},
 		"html":       &kglang.HTMLIndexer{},
 		"css":        &kglang.CSSIndexer{},
 	}

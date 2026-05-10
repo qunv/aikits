@@ -10,6 +10,7 @@ const (
 	LangGo         Lang = "go"
 	LangJava       Lang = "java"
 	LangJavaScript Lang = "javascript"
+	LangTypeScript Lang = "typescript"
 	LangHTML       Lang = "html"
 	LangCSS        Lang = "css"
 )

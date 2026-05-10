@@ -146,7 +146,6 @@ func TestWalkFindsJavaScriptFiles(t *testing.T) {
 	writeTestFile(t, filepath.Join(dir, "module.mjs"))
 	writeTestFile(t, filepath.Join(dir, "common.cjs"))
 	writeTestFile(t, filepath.Join(dir, "component.jsx"))
-	writeTestFile(t, filepath.Join(dir, "skip.ts")) // TypeScript not yet supported
 
 	w := indexer.NewWalker(dir, nil)
 	files, err := w.Walk()
@@ -373,5 +372,48 @@ func TestWalkCSSLangFilter(t *testing.T) {
 	}
 	if len(files) != 1 || files[0].Lang != "css" {
 		t.Errorf("expected 1 css file, got %+v", files)
+	}
+}
+
+func TestWalkFindsTypeScriptFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "app.ts"))
+	writeTestFile(t, filepath.Join(dir, "component.tsx"))
+	writeTestFile(t, filepath.Join(dir, "main.go"))
+
+	w := indexer.NewWalker(dir, nil)
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+
+	langs := make(map[string]int)
+	for _, f := range files {
+		langs[f.Lang]++
+	}
+	if langs["typescript"] != 2 {
+		t.Errorf("expected 2 typescript files, got %d; all: %+v", langs["typescript"], langs)
+	}
+}
+
+func TestWalkTypeScriptLangFilter(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "app.ts"))
+	writeTestFile(t, filepath.Join(dir, "component.tsx"))
+	writeTestFile(t, filepath.Join(dir, "main.go"))
+	writeTestFile(t, filepath.Join(dir, "App.java"))
+
+	w := indexer.NewWalker(dir, []string{"typescript"})
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	if len(files) != 2 {
+		t.Errorf("expected 2 typescript files, got %d: %+v", len(files), files)
+	}
+	for _, f := range files {
+		if f.Lang != "typescript" {
+			t.Errorf("expected lang=typescript, got %s for %s", f.Lang, f.RelPath)
+		}
 	}
 }
