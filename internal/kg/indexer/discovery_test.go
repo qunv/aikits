@@ -338,3 +338,40 @@ if len(files) != 1 || files[0].Lang != "html" {
 t.Errorf("expected 1 html file, got %+v", files)
 }
 }
+
+func TestWalkFindsCSSFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "styles.css"))
+	writeTestFile(t, filepath.Join(dir, "theme.css"))
+	writeTestFile(t, filepath.Join(dir, "main.go"))
+
+	w := indexer.NewWalker(dir, nil)
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+
+	langs := make(map[string]int)
+	for _, f := range files {
+		langs[f.Lang]++
+	}
+	if langs["css"] != 2 {
+		t.Errorf("expected 2 css files, got %d; all: %+v", langs["css"], langs)
+	}
+}
+
+func TestWalkCSSLangFilter(t *testing.T) {
+	dir := t.TempDir()
+	writeTestFile(t, filepath.Join(dir, "styles.css"))
+	writeTestFile(t, filepath.Join(dir, "main.go"))
+	writeTestFile(t, filepath.Join(dir, "App.java"))
+
+	w := indexer.NewWalker(dir, []string{"css"})
+	files, err := w.Walk()
+	if err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+	if len(files) != 1 || files[0].Lang != "css" {
+		t.Errorf("expected 1 css file, got %+v", files)
+	}
+}
